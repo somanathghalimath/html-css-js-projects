@@ -264,7 +264,7 @@
     </section>
 
     <div class="footer">
-      <div class="hint">Tap card or press <strong>Space</strong> for next</div>
+      <div class="hint">Tap left/right or press <strong>&larr;</strong> / <strong>&rarr;</strong></div>
       <div class="footer-actions">
         <button id="revealBtn" type="button" class="primary">Reveal</button>
         <button id="shuffleBtn" type="button">Shuffle</button>
@@ -344,6 +344,19 @@
       }
     }
 
+    function prevItem() {
+      if (finished) {
+        finished = false;
+        index = order.length - 1;
+        render();
+        return;
+      }
+      if (index > 0) {
+        index--;
+        render();
+      }
+    }
+
     function toggleAnswer() {
       if (finished) return;
       answerVisible = !answerVisible;
@@ -359,15 +372,20 @@
     }
 
     document.addEventListener('keydown', function (e) {
-      if (e.code === 'Space') { e.preventDefault(); nextItem(); }
+      if (e.code === 'Space' || e.key === 'ArrowRight') { e.preventDefault(); nextItem(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); prevItem(); }
       else if (e.key === 'a' || e.key === 'A') { toggleAnswer(); }
       else if (e.key === 's' || e.key === 'S') { restart(); }
       else if (e.key === 'r' || e.key === 'R') { restart(); }
     });
 
     stage.addEventListener('click', function (e) {
-      // Don't advance when tapping buttons (they're outside .stage anyway)
-      nextItem();
+      const rect = stage.getBoundingClientRect();
+      if (e.clientX - rect.left < rect.width / 2) {
+        prevItem();
+      } else {
+        nextItem();
+      }
     });
 
     revealBtn.addEventListener('click', function (e) {

@@ -1,10 +1,17 @@
 """Shared helpers: embed images and render the index.html template."""
 
 import base64
+import io
 import json
 import pathlib
 import urllib.parse
 import urllib.request
+
+try:
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
 
 ROOT = pathlib.Path(__file__).parent
 TEMPLATE = ROOT / "_template.html"
@@ -19,10 +26,64 @@ MIME_BY_EXT = {
     ".gif":  "image/gif",
 }
 
+# Anything wider/taller than this gets downscaled. 1000 looks crisp on
+# retina phones and tablets while keeping the embedded payload small.
+MAX_DIM = 1000
+JPEG_QUALITY = 82
+
+
+def _optimize(raw_bytes, suffix):
+    """Return (bytes, mime). Downscale large images and re-encode."""
+    suffix = suffix.lower()
+    mime = MIME_BY_EXT.get(suffix, "application/octet-stream")
+    if not HAS_PIL or suffix not in (".jpg", ".jpeg", ".png", ".webp"):
+        return raw_bytes, mime
+
+    try:
+        with Image.open(io.BytesIO(raw_bytes)) as im:
+            w, h = im.size
+            needs_resize = max(w, h) > MAX_DIM
+            # For JPEGs we always re-encode at our quality cap (saves bytes
+            # even when dimensions are already fine). PNGs are only touched
+            # if they need resizing — preserves lossless brand logos.
+            needs_recompress = suffix in (".jpg", ".jpeg")
+            if not needs_resize and not needs_recompress:
+                return raw_bytes, mime
+
+            if needs_resize:
+                im.thumbnail((MAX_DIM, MAX_DIM), Image.LANCZOS)
+
+            buf = io.BytesIO()
+            if suffix in (".jpg", ".jpeg"):
+                if im.mode != "RGB":
+                    im = im.convert("RGB")
+                im.save(buf, format="JPEG", quality=JPEG_QUALITY,
+                        optimize=True, progressive=True)
+                mime = "image/jpeg"
+            elif suffix == ".png":
+                im.save(buf, format="PNG", optimize=True)
+            elif suffix == ".webp":
+                im.save(buf, format="WEBP", quality=JPEG_QUALITY, method=6)
+            new_bytes = buf.getvalue()
+            # Keep whichever is smaller (avoid making files bigger)
+            if len(new_bytes) < len(raw_bytes):
+                return new_bytes, mime
+            return raw_bytes, MIME_BY_EXT[suffix]
+    except Exception as e:
+        print("  (skip optimize for " + suffix + ": " + str(e) + ")")
+        return raw_bytes, MIME_BY_EXT[suffix]
+
 
 def data_uri(path):
-    mime = MIME_BY_EXT[path.suffix.lower()]
-    b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+    raw = path.read_bytes()
+    optimized, mime = _optimize(raw, path.suffix)
+    if len(optimized) < len(raw):
+        delta = (len(raw) - len(optimized)) / 1024
+        print("  optimized " + path.name + ": " +
+              str(round(len(raw)/1024)) + " KB -> " +
+              str(round(len(optimized)/1024)) + " KB (-" +
+              str(round(delta)) + " KB)")
+    b64 = base64.b64encode(optimized).decode("ascii")
     return "data:" + mime + ";base64," + b64
 
 
