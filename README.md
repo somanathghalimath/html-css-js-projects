@@ -5,6 +5,7 @@ Small standalone HTML/CSS/JS projects that run directly in a browser.
 ## Projects
 
 - [`brand-pop-quiz/`](brand-pop-quiz/) — Slideshow quiz of electronics brand logos. Single-file build with embedded images for easy sharing on mobile.
+- [`name-the-leader/`](name-the-leader/) — Same format, but for Indian national figures. Portraits fetched from Wikipedia and embedded.
 
 ## Hosting
 
