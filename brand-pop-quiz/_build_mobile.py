@@ -39,4 +39,4 @@ ITEMS = [
 ]
 
 entries = [(name, HERE / "assets" / fname) for name, fname in ITEMS]
-emit("Brand Pop Quiz", HERE, entries)
+emit("Brand Pop Quiz", HERE, entries, features={"scratch": True})

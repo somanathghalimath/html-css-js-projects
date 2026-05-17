@@ -127,18 +127,21 @@ def fetch_wikipedia_portrait(title, assets_dir, stem):
     return out_path
 
 
-def emit(title, project_dir, entries):
+def emit(title, project_dir, entries, features=None):
     """Render the template and write <project_dir>/index.html.
 
-    entries: list of (display_name, image_path).
+    entries:  list of (display_name, image_path).
+    features: optional dict of opt-in features (e.g. {"scratch": True}).
     """
     items = [{"name": name, "src": data_uri(path)} for name, path in entries]
     items_json = json.dumps(items, ensure_ascii=False)
+    features_json = json.dumps(features or {})
     html = TEMPLATE.read_text(encoding="utf-8")
     html = (html
         .replace("{{TITLE}}", title)
         .replace("{{TOTAL}}", str(len(items)))
-        .replace("{{ITEMS_JSON}}", items_json))
+        .replace("{{ITEMS_JSON}}", items_json)
+        .replace("{{FEATURES_JSON}}", features_json))
     out = project_dir / "index.html"
     out.write_text(html, encoding="utf-8")
     print("Wrote " + str(out) + " (" + str(round(out.stat().st_size / 1024, 1)) + " KB)")
