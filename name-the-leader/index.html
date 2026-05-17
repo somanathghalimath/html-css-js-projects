@@ -72,6 +72,11 @@
       font-size: clamp(12px, 1.8vw, 15px);
       letter-spacing: 0.02em;
     }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .pill {
       border: 1px solid var(--soft);
@@ -229,6 +234,21 @@
     }
     button.toggle.on:hover { background: rgba(255, 191, 73, 0.28); }
 
+    /* Icon-only buttons (Shuffle, Scratch toggle) */
+    button.icon {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    button.icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
     /* ---------- Done state ---------- */
     .done {
       text-align: center;
@@ -261,13 +281,15 @@
     /* ---------- Small screens ---------- */
     @media (max-width: 520px) {
       .app { padding: 10px; gap: 12px; height: 96dvh; }
-      .topbar, .footer { flex-wrap: wrap; justify-content: center; }
+      .footer { flex-wrap: wrap; justify-content: center; }
       .pill { padding: 7px 12px; }
       .brand-card { width: 92%; padding: 18px; }
       .brand-image { max-height: 46vh; }
       .answer { left: 0; right: 0; bottom: 14px; text-align: center; }
       .hint { display: none; }
       button { padding: 11px 14px; }
+      button.icon { padding: 0; width: 44px; height: 44px; }
+      button.icon svg { width: 20px; height: 20px; }
     }
 
     /* ---------- Landscape phones ---------- */
@@ -284,7 +306,18 @@
   <main class="app">
     <div class="topbar">
       <div class="pill">Name the Leader</div>
-      <div class="pill"><strong id="counter">1</strong>&nbsp;/&nbsp;<span id="total">10</span></div>
+      <div class="topbar-right">
+        <div class="pill"><strong id="counter">1</strong>&nbsp;/&nbsp;<span id="total">10</span></div>
+        <button id="scratchBtn" type="button" class="icon toggle" aria-label="Toggle scratch mode" title="Scratch mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+            <path d="M20 3v4"/>
+            <path d="M22 5h-4"/>
+            <path d="M4 17v2"/>
+            <path d="M5 18H3"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <section id="stage" class="stage" tabindex="0" aria-label="Quiz card">
@@ -297,9 +330,15 @@
     <div class="footer">
       <div class="hint">Swipe left/right or press <strong>&larr;</strong> / <strong>&rarr;</strong></div>
       <div class="footer-actions">
-        <button id="revealBtn" type="button" class="primary">Reveal</button>
-        <button id="scratchBtn" type="button" class="toggle">Scratch</button>
-        <button id="shuffleBtn" type="button">Shuffle</button>
+        <button id="shuffleBtn" type="button" class="icon" aria-label="Shuffle" title="Shuffle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 3h5v5"/>
+            <path d="M4 20L21 3"/>
+            <path d="M21 16v5h-5"/>
+            <path d="M15 15l6 6"/>
+            <path d="M4 4l5 5"/>
+          </svg>
+        </button>
       </div>
     </div>
   </main>
@@ -320,7 +359,6 @@
     const answerEl   = document.getElementById('answer');
     const counterEl  = document.getElementById('counter');
     const totalEl    = document.getElementById('total');
-    const revealBtn  = document.getElementById('revealBtn');
     const scratchBtn = document.getElementById('scratchBtn');
     const shuffleBtn = document.getElementById('shuffleBtn');
 
@@ -631,10 +669,6 @@
       }
     });
 
-    revealBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      toggleAnswer();
-    });
     scratchBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       toggleScratch();
